@@ -3,11 +3,6 @@ from flask_pymongo import PyMongo
 from flask_session import Session
 from redis import Redis
 from bson.objectid import ObjectId
-#pip install bcrypt
-
-
-import bcrypt
-
 
 app = Flask(__name__)
 app.secret_key = 'clave_secreta'
@@ -49,6 +44,8 @@ def login():
         if user:
             # Guardar la sesión en Redis
             session['usuario'] = user['username']
+            session['usuario_id'] = str(user['_id'])  # Guardar el usuario_id en la sesión
+
             redis_conn.set(f"sesion:{user['username']}", 'activa', ex=3600)  # Expira en 1 hora
             redis_conn.hmset(f"usuario:{user['username']}", {
                 'username': user['username'],
@@ -85,35 +82,24 @@ def logout():
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
     if request.method == 'POST':
+        # Obtener los datos del formulario
         username = request.form['username']
-        nombre = request.form['nombre']
         correo = request.form['correo']
-        telefono = request.form['telefono']
         password = request.form['password']
-
-        # Verificar si ya existe un usuario con ese nombre de usuario
-        if mongo.db.usuarios.find_one({'username': username}):
-            flash("El nombre de usuario ya está en uso.", "danger")
-            return redirect(url_for('registro'))
-
-        # Hashear la contraseña
+        
+        # Encriptar la contraseña
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-
-        # Insertar nuevo usuario
+        
+        # Insertar el usuario en la base de datos
         mongo.db.usuarios.insert_one({
             "username": username,
-            "nombre": nombre,
             "correo": correo,
-            "telefono": telefono,
             "password": hashed_password,
-            "admin": False
+            "admin": False  # Por defecto, los nuevos usuarios son comunes
         })
-
-        flash("Registro exitoso. Inicia sesión.", "success")
-        return redirect(url_for('login'))
-
+        return redirect(url_for('login'))  # Cambia a la ruta que desees
+        
     return render_template('registro.html')
-
 
 # Perfil
 @app.route('/perfil')
@@ -161,36 +147,49 @@ def agregar():
 # VENDER
 @app.route('/vender', methods=['GET', 'POST'])
 def vender_producto():
-    if request.method == 'POST':
-        tipo = request.form['tipo']
-        precio = float(request.form['precio'])
-        titulo = request.form['titulo']
-        descripcion = request.form['descripcion']
-        imagen = request.form['imagen']  # Puede ser un URL o nombre de archivo si quieres subir imágenes.
+    if 'usuario' in session:  # Verificamos si el usuario está logueado
+        usuario = mongo.db.usuarios.find_one({'username': session['usuario']})
+        
+        if request.method == 'POST':
+            tipo = request.form['tipo']
+            precio = float(request.form['precio'])
+            titulo = request.form['titulo']
+            descripcion = request.form['descripcion']
+            imagen = request.form['imagen']  # Puede ser un URL o nombre de archivo si quieres subir imágenes.
 
-        # Obtener el ID del usuario que está publicando el producto (esto puede ser a través de la sesión).
-        usuario_id = session.get('usuario_id')  # Cambiar según cómo gestionas la autenticación.
+            # Obtener el ID del usuario que está publicando el producto (esto puede ser a través de la sesión).
+            usuario_id = str(usuario['_id'])  # Usamos el _id del usuario logueado
 
-        # Guardar el producto en la base de datos
-        mongo.db.productos.insert_one({
-            "tipo": tipo,
-            "precio": precio,
-            "titulo": titulo,
-            "descripcion": descripcion,
-            "imagen": imagen,
-            "usuario_id": usuario_id  # Asociamos el producto con el usuario que lo publica
-        })
-        return redirect('/mis_productos')
+            # Guardar el producto en la base de datos
+            mongo.db.productos.insert_one({
+                "tipo": tipo,
+                "precio": precio,
+                "titulo": titulo,
+                "descripcion": descripcion,
+                "imagen": imagen,
+                "usuario_id": usuario_id  # Asociamos el producto con el usuario que lo publica
+            })
+            return redirect('/mis_productos')  # Redirigir a la página de productos del usuario
 
-    return render_template('vender.html')
+        return render_template('vender.html', usuario=usuario)  # Pasar el usuario a la plantilla
+    
+    flash("Debes iniciar sesión para vender productos", "warning")
+    return redirect('/login')
+
 
 #MIS Productos
 @app.route('/mis_productos')
 def mis_productos():
-    usuario_id = session.get('usuario_id')  # Obtener el ID del usuario logueado
-    productos = mongo.db.productos.find({"usuario_id": usuario_id})
-    return render_template('mis_productos.html', productos=productos)
-
+    if 'usuario' in session:  # Verificamos si hay un usuario en sesión
+        usuario = mongo.db.usuarios.find_one({'username': session['usuario']})
+        
+        # Obtener los productos del usuario logueado
+        productos = mongo.db.productos.find({"usuario_id": str(usuario['_id'])})
+        
+        return render_template('mis_productos.html', productos=productos, usuario=usuario)
+    
+    flash("Debes iniciar sesión para ver tus productos", "warning")
+    return redirect('/login')
 
 # Ver producto (requiere sesión y sube ranking)
 @app.route('/producto/<id>')
@@ -270,4 +269,3 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 if __name__ == '__main__':
     app.run(debug=True)
-
