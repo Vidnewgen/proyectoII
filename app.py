@@ -35,11 +35,10 @@ def index():
 def login():
     if request.method == 'POST':
         user = mongo.db.usuarios.find_one({
-            'username': request.form['username'],
-            'password': request.form['password']
+            'username': request.form['username']
         })
         
-        if user:
+        if user and bcrypt.checkpw(request.form['password'].encode('utf-8'), user['password']):
             session['usuario'] = user['username']
             redis_conn.set(f"sesion:{user['username']}", 'activa', ex=3600)
             redis_conn.hmset(f"usuario:{user['username']}", {
@@ -74,11 +73,19 @@ def registro():
             flash("El nombre de usuario ya está en uso.", "danger")
             return redirect(url_for('registro'))
 
+        # Verificar que el correo no esté registrado
+        correo = request.form['correo']
+        if mongo.db.usuarios.find_one({'correo': correo}):
+            flash("El correo ya está registrado.", "danger")
+            return redirect(url_for('registro'))
+
+        # Encriptar la contraseña
         hashed_password = bcrypt.hashpw(request.form['password'].encode('utf-8'), bcrypt.gensalt())
+
         mongo.db.usuarios.insert_one({
             "username": username,
             "nombre": request.form['nombre'],
-            "correo": request.form['correo'],
+            "correo": correo,
             "telefono": request.form['telefono'],
             "password": hashed_password,
             "admin": False
