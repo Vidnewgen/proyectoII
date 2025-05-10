@@ -135,6 +135,31 @@ def agregar():
         return redirect('/')
     return render_template('agregar.html')
 
+@app.route('/productos', methods=['GET'])
+def productos():
+    categoria = request.args.get('categoria')
+    precio_min = request.args.get('precio_min', type=float)
+    precio_max = request.args.get('precio_max', type=float)
+
+    # Crear un diccionario de filtros
+    filtros = {}
+    
+    if categoria:
+        filtros['categoria'] = categoria
+    
+    if precio_min is not None:
+        filtros['precio'] = {'$gte': precio_min}  # Mayor o igual a precio_min
+    
+    if precio_max is not None:
+        if 'precio' not in filtros:
+            filtros['precio'] = {}
+        filtros['precio']['$lte'] = precio_max  # Menor o igual a precio_max
+    
+    # Filtrar productos en la base de datos
+    productos = list(mongo.db.productos.find(filtros))
+
+    return render_template('productos.html', productos=productos)
+
 # Ruta para ver productos
 @app.route('/producto/<id>')
 def ver_producto(id):
