@@ -142,6 +142,39 @@ def agregar():
         return redirect('/')
     return render_template('agregar.html')
 
+# VENDER
+@app.route('/vender', methods=['GET', 'POST'])
+def vender_producto():
+    if request.method == 'POST':
+        tipo = request.form['tipo']
+        precio = float(request.form['precio'])
+        titulo = request.form['titulo']
+        descripcion = request.form['descripcion']
+        imagen = request.form['imagen']  # Puede ser un URL o nombre de archivo si quieres subir imágenes.
+
+        # Obtener el ID del usuario que está publicando el producto (esto puede ser a través de la sesión).
+        usuario_id = session.get('usuario_id')  # Cambiar según cómo gestionas la autenticación.
+
+        # Guardar el producto en la base de datos
+        mongo.db.productos.insert_one({
+            "tipo": tipo,
+            "precio": precio,
+            "titulo": titulo,
+            "descripcion": descripcion,
+            "imagen": imagen,
+            "usuario_id": usuario_id  # Asociamos el producto con el usuario que lo publica
+        })
+        return redirect('/mis_productos')
+
+    return render_template('vender.html')
+
+#MIS Productos
+@app.route('/mis_productos')
+def mis_productos():
+    usuario_id = session.get('usuario_id')  # Obtener el ID del usuario logueado
+    productos = mongo.db.productos.find({"usuario_id": usuario_id})
+    return render_template('mis_productos.html', productos=productos)
+
 
 # Ver producto (requiere sesión y sube ranking)
 @app.route('/producto/<id>')
@@ -153,6 +186,37 @@ def ver_producto(id):
     if producto:
         redis_conn.zincrby("mas_vendidos", 1, producto['titulo'])
     return render_template("producto.html", producto=producto)
+
+#EDITAR PRODUCTO
+@app.route('/editar_producto/<id>', methods=['GET', 'POST'])
+def editar_producto(id):
+    # Buscar el producto por su ID
+    producto = mongo.db.productos.find_one({"_id": ObjectId(id)})
+    
+    # Si el método es POST, significa que se envió el formulario
+    if request.method == 'POST':
+        titulo = request.form['titulo']
+        descripcion = request.form['descripcion']
+        imagen = request.form['imagen']  # Esto puede ser la URL de la imagen o el nombre del archivo
+        
+        # Actualizar la información del producto en la base de datos
+        mongo.db.productos.update_one(
+            {"_id": ObjectId(id)},
+            {"$set": {"titulo": titulo, "descripcion": descripcion, "imagen": imagen}}
+        )
+        # Redirigir a la página de administración o donde se necesite
+        return redirect('/admin')  # Cambia esto según tu ruta de panel de administración
+    
+    # Si el método es GET, simplemente mostrar el formulario con los datos actuales del producto
+    return render_template('editar_producto.html', producto=producto)
+
+#ELIMINAR PRODUCTO
+@app.route('/eliminar_producto/<id>', methods=['GET'])
+def eliminar_producto(id):
+    # Eliminar el producto de la base de datos usando el ID
+    mongo.db.productos.delete_one({"_id": ObjectId(id)})
+    # Redirigir a la página de administración después de eliminar
+    return redirect('/admin')  # Cambia esto según tu ruta de panel de administración
 
 #EDITAR USUARIO
 @app.route('/editar_usuario/<id>', methods=['GET', 'POST'])
