@@ -3,6 +3,11 @@ from flask_pymongo import PyMongo
 from flask_session import Session
 from redis import Redis
 from bson.objectid import ObjectId
+#pip install bcrypt
+
+
+import bcrypt
+
 
 app = Flask(__name__)
 app.secret_key = 'clave_secreta'
@@ -80,24 +85,35 @@ def logout():
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
     if request.method == 'POST':
-        # Obtener los datos del formulario
         username = request.form['username']
+        nombre = request.form['nombre']
         correo = request.form['correo']
+        telefono = request.form['telefono']
         password = request.form['password']
-        
-        # Encriptar la contraseña
+
+        # Verificar si ya existe un usuario con ese nombre de usuario
+        if mongo.db.usuarios.find_one({'username': username}):
+            flash("El nombre de usuario ya está en uso.", "danger")
+            return redirect(url_for('registro'))
+
+        # Hashear la contraseña
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        
-        # Insertar el usuario en la base de datos
+
+        # Insertar nuevo usuario
         mongo.db.usuarios.insert_one({
             "username": username,
+            "nombre": nombre,
             "correo": correo,
+            "telefono": telefono,
             "password": hashed_password,
-            "admin": False  # Por defecto, los nuevos usuarios son comunes
+            "admin": False
         })
-        return redirect(url_for('login'))  # Cambia a la ruta que desees
-        
+
+        flash("Registro exitoso. Inicia sesión.", "success")
+        return redirect(url_for('login'))
+
     return render_template('registro.html')
+
 
 # Perfil
 @app.route('/perfil')
@@ -190,3 +206,4 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 if __name__ == '__main__':
     app.run(debug=True)
+
