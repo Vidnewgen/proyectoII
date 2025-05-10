@@ -48,7 +48,8 @@ def login():
             })
 
             flash("Bienvenido, Administrador" if user.get('admin', False) else "Bienvenido", "success")
-            return redirect(url_for('admin_panel' if user.get('admin', False) else '/'))
+            return redirect(url_for('admin_panel' if user.get('admin', False) else 'index'))
+
 
         flash("Credenciales inválidas", "danger")
     return render_template('login.html')
