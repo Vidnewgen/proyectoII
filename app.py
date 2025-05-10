@@ -5,6 +5,8 @@ from redis import Redis
 from bson.objectid import ObjectId
 
 import bcrypt
+import json
+
 app = Flask(__name__)
 app.secret_key = 'clave_secreta'
 
@@ -26,9 +28,22 @@ redis_conn = Redis(host='localhost', port=6379, decode_responses=True)
 @app.route('/', methods=['GET'])
 def index():
     print("Sesión actual:", session)
-    productos = list(mongo.db.productos.find())
+    productosventa = list(mongo.db.productos.find())
     usuario = mongo.db.usuarios.find_one({'username': session.get('usuario')}) if 'usuario' in session else None
-    return render_template('index.html', productos=productos, usuario=usuario)
+    productos_carrito = []  # Inicializamos la lista vacía para los productos del carrito
+    total = 0  # Inicializamos el total
+
+    if 'usuario' in session:  # Solo mostramos el carrito si el usuario está autenticado
+        carrito_key = f"carrito:{session['usuario']}"
+
+        # Recuperamos todos los productos del carrito en Redis (hash)
+        productos_carrito = redis_conn.hgetall(carrito_key)
+        # Convertimos los productos de Redis (JSON) a diccionarios de Python
+        productos_carrito = {k: json.loads(v) for k, v in productos_carrito.items()}
+        # Totalizamos el precio del carrito
+        total = sum([producto['cantidad'] * producto['precio'] for producto in productos_carrito.values()])
+    print(productos_carrito)
+    return render_template('index.html', productosventa=productosventa, usuario=usuario, carrito=productos_carrito, total=total)
 
 # Ruta de inicio de sesión
 @app.route('/login', methods=['GET', 'POST'])
@@ -117,6 +132,63 @@ def admin_panel():
 
     return render_template('admin_panel.html', usuario=usuario, productos=productos, usuarios=usuarios_comunes)
 
+# AGREGAR CARRITO
+@app.route('/agregar_al_carrito/<producto_id>', methods=['POST'])
+def agregar_al_carrito(producto_id):
+    if 'usuario' not in session:
+        flash("Debes iniciar sesión para agregar productos al carrito", "warning")
+        return redirect('/login')
+
+    producto = mongo.db.productos.find_one({'_id': ObjectId(producto_id)})
+    if not producto:
+        flash("Producto no encontrado", "danger")
+        return redirect('/')
+
+    usuario = session['usuario']
+    carrito_key = f"carrito:{usuario}"
+
+    # Verificar si la clave ya existe y tiene un tipo incorrecto
+    if redis_conn.exists(carrito_key):
+        if redis_conn.type(carrito_key) != 'hash':
+            # Si la clave no es un hash, la eliminamos para evitar el error
+            redis_conn.delete(carrito_key)
+
+    # Crear el objeto del producto a agregar al carrito
+    producto_data = {
+        "producto_id": producto_id,
+        "nombre": producto['titulo'],
+        "cantidad": 1,  # Inicializamos con una cantidad de 1
+        "precio": producto['precio']  # Suponiendo que el producto tiene un campo 'precio'
+    }
+
+    # Usamos HSET para agregar el producto al carrito, la clave del hash es el producto_id
+    redis_conn.hset(carrito_key, producto_id, json.dumps(producto_data))
+
+    # Establecer un TTL de 1 hora (3600 segundos)
+    redis_conn.expire(carrito_key, 3600)
+
+    flash("Producto agregado al carrito", "success")
+    return redirect(url_for('index'))
+
+
+# ELIMINAR ITEM CARRITO
+@app.route('/eliminar_del_carrito/<producto_id>', methods=['GET', 'POST'])
+def eliminar_del_carrito(producto_id):
+    if 'usuario' not in session:
+        flash("Debes iniciar sesión para modificar el carrito", "warning")
+        return redirect('/login')
+
+    usuario = session['usuario']
+    carrito_key = f"carrito:{usuario}"
+    print (carrito_key)
+    if redis_conn.hexists(carrito_key, producto_id):
+        redis_conn.hdel(carrito_key, producto_id)
+        flash("Producto eliminado del carrito", "success")
+    else:
+        flash("Producto no encontrado en el carrito", "info")
+
+    return redirect(request.referrer or url_for('index'))
+
 # Ruta para agregar productos
 @app.route('/agregar', methods=['GET', 'POST'])
 def agregar():
@@ -188,6 +260,37 @@ def ver_producto(id):
     if producto:
         redis_conn.zincrby("mas_vendidos", 1, producto['titulo'])
     return render_template("producto.html", producto=producto)
+
+#EDITAR PRODUCTO
+@app.route('/editar_producto/<id>', methods=['GET', 'POST'])
+def editar_producto(id):
+    # Buscar el producto por su ID
+    producto = mongo.db.productos.find_one({"_id": ObjectId(id)})
+    
+    # Si el método es POST, significa que se envió el formulario
+    if request.method == 'POST':
+        titulo = request.form['titulo']
+        descripcion = request.form['descripcion']
+        imagen = request.form['imagen']  # Esto puede ser la URL de la imagen o el nombre del archivo
+        
+        # Actualizar la información del producto en la base de datos
+        mongo.db.productos.update_one(
+            {"_id": ObjectId(id)},
+            {"$set": {"titulo": titulo, "descripcion": descripcion, "imagen": imagen}}
+        )
+        # Redirigir a la página de administración o donde se necesite
+        return redirect('/admin')  # Cambia esto según tu ruta de panel de administración
+    
+    # Si el método es GET, simplemente mostrar el formulario con los datos actuales del producto
+    return render_template('editar_producto.html', producto=producto)
+
+#ELIMINAR PRODUCTO
+@app.route('/eliminar_producto/<id>', methods=['GET'])
+def eliminar_producto(id):
+    # Eliminar el producto de la base de datos usando el ID
+    mongo.db.productos.delete_one({"_id": ObjectId(id)})
+    # Redirigir a la página de administración después de eliminar
+    return redirect('/admin')  # Cambia esto según tu ruta de panel de administración
 
 # Ruta para editar usuario
 @app.route('/editar_usuario/<id>', methods=['GET', 'POST'])

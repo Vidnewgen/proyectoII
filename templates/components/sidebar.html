@@ -24,3 +24,40 @@
     <button type="submit" class="btn btn-primary w-100">Aplicar filtros</button>
   </form>
 </div>
+
+<div class="card p-3 mt-4 shadow-sm">
+  <h5 class="mb-3">Carrito de compras</h5>
+
+  {% if carrito %}
+    <table class="table table-sm">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Precio</th>
+          <th>Cantidad</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in carrito.values() %}
+        <tr>
+          <td>{{ item.nombre }}</td>
+          <td>${{ item.precio }}</td>
+          <td>{{ item.cantidad }}</td>
+          <td>
+            <form action="/eliminar_del_carrito/{{ item.producto_id }}" method="POST" style="display:inline;">
+              <button type="submit" class="btn btn-danger"
+                      onclick="return confirm('¿Estás seguro de eliminar este producto?');">
+                Eliminar
+              </button>
+            </form>
+          </td>
+
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="text-muted">Tu carrito está vacío.</p>
+  {% endif %}
+</div>

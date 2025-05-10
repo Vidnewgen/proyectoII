@@ -40,14 +40,19 @@
             <div class="container my-5">
               <h3 class="mb-4">Productos</h3>
               <div class="row g-4">
-                {% if productos %}
-                  {% for producto in productos %}
+                {% if productosventa %}
+                  {% for producto in productosventa %}
                     <div class="col-12 col-sm-6 col-md-4">
                       <div class="card h-100">
                         <img src="{{ producto.imagen}}" class="card-img-top" alt="Producto">
                         <div class="card-body">
                           <h5 class="card-title">{{ producto.titulo }}</h5>
                           <p class="card-text">{{ producto.descripcion }}</p>
+                          <form action="/agregar_al_carrito/{{ producto._id }}" method="POST">
+                            <input type="hidden" name="producto_id" value="{{ producto._id }}">
+                            <button type="submit" class="btn btn-success btn-sm mt-2">+</button>
+                          </form>
+
                         </div>
                       </div>
                     </div>
