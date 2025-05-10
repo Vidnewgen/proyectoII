@@ -95,8 +95,6 @@ def registro():
             "password": hashed_password,
             "admin": False  # Por defecto, los nuevos usuarios son comunes
         })
-        
-        # Redirigir a la página de inicio o al login
         return redirect(url_for('login'))  # Cambia a la ruta que desees
         
     return render_template('registro.html')
@@ -156,11 +154,35 @@ def ver_producto(id):
         redis_conn.zincrby("mas_vendidos", 1, producto['titulo'])
     return render_template("producto.html", producto=producto)
 
-#eliminar USUARIO
+#EDITAR USUARIO
+@app.route('/editar_usuario/<id>', methods=['GET', 'POST'])
+def editar_usuario(id):
+    # Buscar el usuario por su ID
+    usuario = mongo.db.usuarios.find_one({"_id": ObjectId(id)})
+    
+    # Si el método es POST, significa que se envió el formulario
+    if request.method == 'POST':
+        username = request.form['username']
+        correo = request.form['correo']
+        nombre = request.form['nombre']
+        telefono = request.form['telefono']
+        
+        # Actualizar la información del usuario en la base de datos
+        mongo.db.usuarios.update_one(
+            {"_id": ObjectId(id)},
+            {"$set": {"username": username, "correo": correo, "nombre": nombre, "telefono": telefono}}
+        )
+        # Redirigir a la página de administración o donde se necesite
+        return redirect('/admin')  # Cambia esto según tu ruta de panel de administración
+    
+    # Si el método es GET, simplemente mostrar el formulario con los datos actuales del usuario
+    return render_template('editar_usuario.html', usuario=usuario)
+
+#ELIMINAR USUARIO
 @app.route('/eliminar_usuario/<id>', methods=['GET'])
 def eliminar_usuario(id):
     mongo.db.usuarios.delete_one({"_id": ObjectId(id)})
-    return redirect('/admin')  # Redirigir al panel de administración después de eliminar
+    return redirect('/admin')
 
 # Configuración de la subida de archivos
 UPLOAD_FOLDER = 'static/uploads'
