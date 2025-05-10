@@ -30,16 +30,12 @@
 </head>
 <body>
     <div class="page-container">
-        <!-- Navbar (Se incluye desde un archivo separado) -->
         {% include 'components/navbar.html' %}
 
         <div class="container-fluid content-wrap">
             <div class="row">
                 <div class="col-md-12">
-                    <!-- Contenido principal -->
                     <h2>Registro de Usuario</h2>
-
-                    <!-- Formulario de registro -->
                     <div class="form-container mt-4">
                         <form method="POST" action="{{ url_for('registro') }}">
                             <div class="mb-3">
@@ -47,12 +43,16 @@
                                 <input type="text" class="form-control" id="username" name="username" required>
                             </div>
                             <div class="mb-3">
+                                <label for="nombre" class="form-label">Nombre Completo</label>
+                                <input type="text" class="form-control" id="nombre" name="nombre" required>
+                            </div>
+                            <div class="mb-3">
                                 <label for="correo" class="form-label">Correo Electrónico</label>
                                 <input type="email" class="form-control" id="correo" name="correo" required>
                             </div>
                             <div class="mb-3">
-                                <label for="correo" class="form-label">Telefono</label>
-                                <input type="email" class="form-control" id="telefono" name="telefono" required>
+                                <label for="telefono" class="form-label">Teléfono</label>
+                                <input type="tel" class="form-control" id="telefono" name="telefono" required>
                             </div>
                             <div class="mb-3">
                                 <label for="password" class="form-label">Contraseña</label>
@@ -65,8 +65,8 @@
             </div>
         </div>
 
-        <!-- Footer (Se incluye desde un archivo separado) -->
         {% include 'components/footer.html' %}
     </div>
 </body>
 </html>
+
