@@ -4,6 +4,7 @@ from flask_session import Session
 from redis import Redis
 from bson.objectid import ObjectId
 
+import bcrypt
 app = Flask(__name__)
 app.secret_key = 'clave_secreta'
 
@@ -74,6 +75,7 @@ def registro():
         username = request.form['username']
         correo = request.form['correo']
         password = request.form['password']
+        telefono = request.form['telefono']
         
         # Encriptar la contraseña
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
@@ -83,6 +85,7 @@ def registro():
             "username": username,
             "correo": correo,
             "password": hashed_password,
+            "telefono": telefono,
             "admin": False  # Por defecto, los nuevos usuarios son comunes
         })
         return redirect(url_for('login'))  # Cambia a la ruta que desees
