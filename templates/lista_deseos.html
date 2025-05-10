@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titulo }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+</head>
+<body class="bg-light">
+    <div class="container my-5">
+        <h2 class="mb-4">{{ titulo }}</h2>
+
+        {% if deseos %}
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                {% for deseo in deseos %}
+                    <div class="col">
+                        <div class="card h-100 shadow-sm">
+                            {% if deseo.imagen %}
+                                <img src="{{ deseo.imagen }}" class="card-img-top" alt="{{ deseo.nombre }}">
+                            {% else %}
+                                <img src="default-image.jpg" class="card-img-top" alt="Imagen no disponible">
+                            {% endif %}
+                            <div class="card-body">
+                                <h5 class="card-title">{{ deseo.nombre if deseo.nombre else 'Producto sin nombre' }}</h5>
+                                <p class="card-text">ID del producto: {{ deseo.id_producto if deseo.id_producto else 'No disponible' }}</p>
+                            </div>
+                            <div class="card-footer">
+                                <form method="POST" action="{{ url_for('eliminar_deseo_mongo', id=deseo._id) }}">
+                                    <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info text-center">Tu lista de deseos está vacía.</div>
+        {% endif %}
+
+        <a href="{{ url_for('index') }}" class="btn btn-secondary mt-4">Volver a la tienda</a>
+    </div>
+</body>
+</html>

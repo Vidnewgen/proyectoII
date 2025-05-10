@@ -317,9 +317,67 @@ def eliminar_usuario(id):
     mongo.db.usuarios.delete_one({"_id": ObjectId(id)})
     return redirect('/admin')
 
+#agregar a lalista de deseos
+@app.route('/agregar_deseo_mongo/<id>', methods=['POST'])
+def agregar_deseo_mongo(id):
+    if not usuario_logueado():
+        flash("Inicia sesión para agregar a tu lista de deseos", "warning")
+        return redirect(url_for('login'))
+
+    producto = mongo.db.productos.find_one({"_id": ObjectId(id)})
+    if not producto:
+        flash("Producto no encontrado", "danger")
+        return redirect(url_for('index'))
+
+    usuario = mongo.db.usuarios.find_one({"_id": ObjectId(session['usuario_id'])})
+    if usuario:
+        if not mongo.db.deseos.find_one({'usuario_id': session['usuario_id'], 'producto_id': id}):
+            mongo.db.deseos.insert_one({
+                'usuario_id': session['usuario_id'],
+                'producto_id': id,
+                'nombre': producto.get('nombre', ''),
+                'imagen': producto.get('imagen', '')
+            })
+            flash("Producto agregado a tu lista de deseos", "success")
+        else:
+            flash("Este producto ya está en tu lista de deseos", "info")
+    return redirect(url_for('index'))
+
+#eliminar deseos
+@app.route('/eliminar_deseo_mongo/<id>', methods=['POST'])
+def eliminar_deseo_mongo(id):
+    if not usuario_logueado():
+        flash("Inicia sesión para eliminar de tu lista de deseos", "warning")
+        return redirect(url_for('login'))
+
+    producto = mongo.db.productos.find_one({"_id": ObjectId(id)})
+    if not producto:
+        flash("Producto no encontrado", "danger")
+        return redirect(url_for('index'))
+
+    resultado = mongo.db.deseos.delete_one({'usuario_id': session['usuario_id'], 'producto_id': id})
+    if resultado.deleted_count > 0:
+        flash("Producto eliminado de tu lista de deseos", "success")
+    else:
+        flash("Este producto no estaba en tu lista de deseos", "info")
+    return redirect(url_for('lista_deseos'))
+
+#lista de deseos
+@app.route('/lista_deseos')
+def lista_deseos():
+    if not usuario_logueado():
+        flash("Inicia sesión para ver tu lista", "warning")
+        return redirect(url_for('login'))
+
+    deseos = list(mongo.db.deseos.find({'usuario_id': session['usuario_id']}))
+    return render_template('lista_deseos.html', deseos=deseos, titulo='Mis Deseos')
+
 # Configuración de la subida de archivos
 UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def usuario_logueado():
+    return 'usuario' in session
 
 if __name__ == '__main__':
     app.run(debug=True)
