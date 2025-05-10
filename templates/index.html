@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+  
+  <title>Proyecto</title>
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    .page-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .content-wrap {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    {% include 'components/navbar.html' %}
+
+    <div class="container-fluid content-wrap">
+      <div class="row">
+        <div class="col-md-3">
+          {% include 'components/sidebar.html' %}
+        </div>
+        <div class="col-md-9">
+          {% block content %}
+          <!--imagenes-->
+            <div class="container my-5">
+              <h3 class="mb-4">Productos</h3>
+              <div class="row g-4">
+                {% if productos %}
+                  {% for producto in productos %}
+                    <div class="col-12 col-sm-6 col-md-4">
+                      <div class="card h-100">
+                        <img src="{{ producto.imagen}}" class="card-img-top" alt="Producto">
+                        <div class="card-body">
+                          <h5 class="card-title">{{ producto.titulo }}</h5>
+                          <p class="card-text">{{ producto.descripcion }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                {% else %}
+                  <p class="text-center text-muted">Lista vacía. No hay productos disponibles.</p>
+                {% endif %}
+              </div>
+            </div>
+          {% endblock %}
+        </div>
+      </div>
+    </div>
+
+    {% include 'components/footer.html' %}
+  </div>
+</body>
+</html>

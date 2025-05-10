@@ -1,0 +1,26 @@
+<div class="card p-3 shadow-sm">
+  <h5 class="mb-3">Filtrar productos</h5>
+  <form method="GET" action="/productos">
+    <div class="mb-3">
+      <label for="categoria" class="form-label">Categoría</label>
+      <select class="form-select" name="categoria" id="categoria">
+        <option value="">Todas</option>
+        <option value="ropa">Ropa</option>
+        <option value="electronica">Electrónica</option>
+        <option value="hogar">Hogar</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="precio_min" class="form-label">Precio mínimo</label>
+      <input type="number" class="form-control" name="precio_min" id="precio_min" placeholder="0">
+    </div>
+
+    <div class="mb-3">
+      <label for="precio_max" class="form-label">Precio máximo</label>
+      <input type="number" class="form-control" name="precio_max" id="precio_max" placeholder="1000">
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100">Aplicar filtros</button>
+  </form>
+</div>
