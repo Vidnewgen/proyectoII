@@ -1,0 +1,14 @@
+.text-accent {
+  color: #00ffc8;
+}
+.border-accent {
+  border-color: #00ffc8 !important;
+}
+.btn-accent {
+  background: linear-gradient(90deg, #00ffc8, #0055ff);
+  color: #fff;
+  border: none;
+}
+.btn-accent:hover {
+  background: linear-gradient(90deg, #00bfa6, #003ec7);
+}

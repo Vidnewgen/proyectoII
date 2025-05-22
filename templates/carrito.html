@@ -1,0 +1,25 @@
+<h2 class="text-center my-4 text-uppercase fw-bold text-primary">🛒 Tu Carrito</h2>
+
+<div class="container" style="max-width: 600px;">
+  {% if productos %}
+    <ul class="list-group shadow-lg rounded">
+      {% for producto in productos %}
+        <li class="list-group-item d-flex justify-content-between align-items-center bg-light">
+          <div>
+            <strong>{{ producto['nombre'] }}</strong>
+            <span class="text-muted"> - ${{ producto['precio'] }}</span>
+          </div>
+          <form method="POST" action="{{ url_for('quitar_carrito', producto_id=producto['_id']) }}">
+            <button class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-trash"></i> Eliminar
+            </button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="alert alert-warning text-center mt-4" role="alert">
+      No hay productos en tu carrito.
+    </div>
+  {% endif %}
+</div>

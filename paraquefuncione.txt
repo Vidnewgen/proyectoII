@@ -1,0 +1,5 @@
+Redis corriendo y accesible en localhost:6379.
+
+RedisTimeSeries cargado correctamente.
+
+Python 3 con flask y redis:
