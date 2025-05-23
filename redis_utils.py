@@ -9,7 +9,6 @@ from flask import session, jsonify
 
 _r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
-r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 def get_redis_connection():
     """Devuelve la conexión Redis."""
     return _r
@@ -73,6 +72,17 @@ def listar_productos() -> List[dict]:
             continue
     return productos
 
+def actualizar_producto(id_producto: str, datos_actualizados: dict) -> bool:
+    clave = f"producto:{id_producto}"
+    producto_actual = obtener_producto(id_producto)
+    if not producto_actual:
+        return False  # Producto no existe
+
+    # Actualizar campos permitidos
+    producto_actual.update(datos_actualizados)
+    _r.set(clave, json.dumps(producto_actual))
+    return True
+
 # ------------------ GESTIÓN DE CARRITO ------------------ #
 
 def agregar_producto_carrito(usuario_id: str, producto_id: str) -> int:
@@ -134,18 +144,20 @@ def eliminar_compras_usuario(usuario_id: str) -> int:
     keys = list(_r.scan_iter(f"compra:{usuario_id}:*"))
     return _r.delete(*keys) if keys else 0
 
-def agregar_deseo(producto_id):
+# ------------------ GESTIÓN DE DESEOS ------------------ #
+
+def agregar_deseo(producto_id: str) -> dict:
     if 'usuario_id' not in session:
-        return jsonify({'error': 'Usuario no autenticado'}), 401
+        return {'error': 'Usuario no autenticado'}, 401
 
     usuario_id = session['usuario_id']
     clave_lista_deseos = f"deseos:{usuario_id}"
 
     # Verificar si el producto ya está en la lista
-    if r.sismember(clave_lista_deseos, producto_id):
-        return jsonify({'mensaje': 'El producto ya está en la lista de deseos'}), 200
+    if _r.sismember(clave_lista_deseos, producto_id):
+        return {'mensaje': 'El producto ya está en la lista de deseos'}, 200
 
     # Agregar el producto a la lista de deseos (conjunto en Redis)
-    r.sadd(clave_lista_deseos, producto_id)
+    _r.sadd(clave_lista_deseos, producto_id)
 
-    return jsonify({'mensaje': 'Producto agregado a la lista de deseos'}), 201
+    return {'mensaje': 'Producto agregado a la lista de deseos'}, 201
