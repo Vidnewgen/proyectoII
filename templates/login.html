@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Bienvenido</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap');
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      background-size: 400% 400%;
+      animation: gradientShift 12s ease infinite;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+      color: #ffffff;
+    }
+
+    @keyframes gradientShift {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+
+    .login-container {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      box-shadow: 0 0 30px rgba(0,255,255,0.3), 0 0 60px rgba(0, 153, 255, 0.2) inset;
+      backdrop-filter: blur(18px);
+      transform: perspective(900px) rotateX(5deg);
+      transition: transform 0.5s ease, box-shadow 0.3s ease;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .login-container:hover {
+      transform: perspective(900px) rotateX(0deg);
+      box-shadow: 0 0 40px rgba(0,255,255,0.6), 0 0 80px rgba(0, 153, 255, 0.4) inset;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 1.8rem;
+      font-size: 2rem;
+      color: #00ffff;
+      text-shadow: 0 0 10px #00ffffaa;
+    }
+
+    .form-label {
+      color: #ccc;
+    }
+
+    .form-control {
+      background-color: rgba(255, 255, 255, 0.08);
+      border: 1px solid #00ffff66;
+      border-radius: 12px;
+      color: #fff;
+      box-shadow: inset 0 0 8px rgba(0,255,255,0.2);
+      transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+      border-color: #00ffff;
+      box-shadow: 0 0 8px #00ffff, 0 0 16px #00ffff77;
+      background-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .btn-login, .btn-guest {
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border: none;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 10px rgba(0,255,255,0.3);
+    }
+
+    .btn-login {
+      background: linear-gradient(45deg, #00ffff, #0066ff);
+      color: #111;
+    }
+
+    .btn-login:hover {
+      background: linear-gradient(45deg, #00e6e6, #0044cc);
+      box-shadow: 0 0 15px #00ffffaa;
+    }
+
+    .btn-guest {
+      background: linear-gradient(45deg, #bda01c, #ff8800);
+      color: #111;
+    }
+
+    .btn-guest:hover {
+      background: linear-gradient(45deg, #ffbf00, #e66e00);
+      box-shadow: 0 0 15px #ffc107aa;
+    }
+
+    .alert {
+      background: rgba(255, 0, 0, 0.1);
+      border: 1px solid #ff4d4d;
+      color: #ff9999;
+      border-radius: 10px;
+    }
+
+    .forgot-password {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 0.9rem;
+    }
+
+    .forgot-password a {
+      color: #00ffff;
+      text-decoration: none;
+    }
+
+    .forgot-password a:hover {
+      color: #ffffff;
+      text-shadow: 0 0 6px #00ffffcc;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h2>Iniciar sesión</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="post" action="{{ url_for('login') }}" autocomplete="off">
+      <div class="mb-3">
+        <label for="username" class="form-label">Usuario</label>
+        <input type="text" name="username" id="username" class="form-control" required autofocus>
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">Contraseña</label>
+        <input type="password" name="password" id="password" class="form-control" required>
+      </div>
+      <button type="submit" class="btn btn-login">Entrar</button>
+    </form>
+
+    <form method="post" action="{{ url_for('login_invitado') }}">
+      <button type="submit" class="btn btn-guest">Entrar sin registro</button>
+    </form>
+
+    <div class="forgot-password">
+      <a href="#">¿Olvidaste tu contraseña?</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

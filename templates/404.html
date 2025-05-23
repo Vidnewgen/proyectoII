@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Error 404 - Página No Encontrada</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Impact', sans-serif;
+      background-color: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      position: relative;
+      color: #fff;
+      perspective: 1000px;
+      animation: background-flicker 0.1s infinite alternate;
+    }
+
+    @keyframes background-flicker {
+      0% { background-color: #000; }
+      100% { background-color: #1a0000; }
+    }
+
+    #video-background {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      z-index: -1;
+      transform: translate(-50%, -50%) scale(1.1);
+      background-size: cover;
+      filter: brightness(0.6) contrast(2) saturate(2) hue-rotate(180deg);
+      animation: video-glitch 0.5s infinite alternate;
+    }
+
+    @keyframes video-glitch {
+      0%, 100% {
+        filter: brightness(0.6) contrast(2) saturate(2) hue-rotate(180deg) blur(0px);
+        transform: translate(-50%, -50%) scale(1.1);
+      }
+      50% {
+        filter: brightness(0.7) contrast(2.5) saturate(2.5) hue-rotate(190deg) blur(1px);
+        transform: translate(-49%, -51%) scale(1.12);
+      }
+    }
+
+    .error-container {
+      text-align: center;
+      z-index: 1;
+      padding: 30px;
+      background: rgba(20, 0, 0, 0.9);
+      border-radius: 15px;
+      box-shadow: 0 0 80px rgba(255, 0, 0, 1),
+                  0 0 120px rgba(255, 0, 0, 0.7),
+                  0 0 200px rgba(255, 0, 0, 0.4);
+      animation: intense-pulse-red 0.8s infinite alternate, shake-xy 0.1s infinite;
+      transform-style: preserve-3d;
+    }
+
+    @keyframes intense-pulse-red {
+      0% {
+        box-shadow: 0 0 80px rgba(255, 0, 0, 1),
+                    0 0 120px rgba(255, 0, 0, 0.7),
+                    0 0 200px rgba(255, 0, 0, 0.4);
+      }
+      100% {
+        box-shadow: 0 0 100px rgba(255, 0, 0, 1),
+                    0 0 150px rgba(255, 0, 0, 0.9),
+                    0 0 250px rgba(255, 0, 0, 0.6);
+      }
+    }
+
+    @keyframes shake-xy {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(5px, 2px); }
+      50% { transform: translate(-3px, -5px); }
+      75% { transform: translate(2px, 4px); }
+    }
+
+    .error-container h1 {
+      font-size: 8em;
+      margin: 0;
+      color: #FF0000;
+      text-shadow: 0 0 30px rgba(255, 0, 0, 1),
+                   0 0 60px rgba(255, 0, 0, 0.8),
+                   0 0 100px rgba(255, 0, 0, 0.6);
+      letter-spacing: 10px;
+      animation: text-flicker 0.15s infinite alternate;
+      transform: rotateX(5deg) rotateY(-5deg);
+      font-weight: bold;
+    }
+
+    @keyframes text-flicker {
+      0%, 100% {
+        opacity: 1;
+        transform: rotateX(5deg) rotateY(-5deg);
+      }
+      50% {
+        opacity: 0.9;
+        transform: rotateX(6deg) rotateY(-4deg);
+      }
+    }
+
+    .error-container p {
+      font-size: 2.2em;
+      color: #FFFF00;
+      margin-top: 20px;
+      font-weight: bold;
+      text-shadow: 0 0 10px rgba(255, 255, 0, 0.8);
+      animation: p-flicker 0.2s infinite alternate;
+    }
+
+    @keyframes p-flicker {
+      0% { opacity: 1; }
+      100% { opacity: 0.95; }
+    }
+
+    @media (max-width: 768px) {
+      .error-container h1 {
+        font-size: 5em;
+        letter-spacing: 5px;
+      }
+      .error-container p {
+        font-size: 1.5em;
+      }
+      .error-container {
+        padding: 15px;
+      }
+    }
+
+    iframe.ytplayer {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Video de fondo silencioso -->
+  <video autoplay muted loop id="video-background">
+    <source src="https://assets.mixkit.co/videos/preview/mixkit-bright-neon-lines-flow-abstract-4028-large.mp4" type="video/mp4">
+    Tu navegador no soporta el elemento de video.
+  </video>
+
+  <!-- Contenido de error -->
+  <div class="error-container">
+    <h1>ERROR 404</h1>
+    <p>PÁGINA NO ENCONTRADA</p>
+    <p>¡ESTO ES UN ERROR CULPA DE CATACORAAAAAAAAAA!</p>
+  </div>
+
+  <!-- YouTube embed (opcional, con sonido) -->
+  <div id="yt-container" style="display: none;">
+    <iframe id="ytplayer" class="ytplayer" width="0" height="0"
+      src="https://www.youtube.com/embed/dQw4w9WgXcQ?enablejsapi=1"
+      frameborder="0" allow="autoplay" allowfullscreen></iframe>
+  </div>
+
+  <!-- Script de API de YouTube -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script>
+    let player;
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('ytplayer', {
+        events: {
+          'onReady': function (event) {
+            document.getElementById('yt-container').style.display = 'block';
+          }
+        }
+      });
+    }
+
+    function playSound() {
+      if (player) {
+        player.unMute();
+        player.playVideo();
+      }
+    }
+
+    // Botón de cookies simulando activación del sonido
+    document.addEventListener('DOMContentLoaded', () => {
+      const acceptBtn = document.getElementById('accept');
+      acceptBtn.addEventListener('click', () => {
+        document.getElementById('permission').style.display = 'none';
+        playSound();
+      });
+    });
+  </script>
+
+  <!-- Botón de "aceptar" -->
+  <div class="cookies" id="permission" style="position:absolute;bottom:20px;left:20px;z-index:2;background:#fff;color:#000;padding:10px;border-radius:8px;">
+    <p>¿Deseas activar el sonido?</p>
+    <button id="accept">Aceptar</button>
+  </div>
+
+</body>
+</html>

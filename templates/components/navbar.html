@@ -1,0 +1,60 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold text-uppercase" href="{{ url_for('index') }}">DAROK</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu" 
+            aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-end" id="navMenu">
+      <ul class="navbar-nav mb-2 mb-lg-0">
+        <!-- Principal -->
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('index') }}">Principal</a>
+        </li>
+        <!-- Vender -->
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('vender') }}">Vender</a>
+        </li>
+        <!-- Panel Administrador -->
+        {% if usuario and usuario.get('admin') %}
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('admin_panel') }}">Panel Administrador</a>
+        </li>
+        {% endif %}
+        <!-- Stats de productos (solo admin, ejemplo para el primer producto) -->
+        {% if usuario and usuario.get('admin') %}
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('stats_producto', producto_id='ID_DEL_PRODUCTO') }}">Stats Productos</a>
+        </li>
+        {% endif %}
+        <!-- Usuario logueado -->
+        {% if usuario %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
+             data-bs-toggle="dropdown" aria-expanded="false">
+            {{ usuario['username'] }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+            <li><a class="dropdown-item" href="{{ url_for('perfil') }}">Perfil</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('mis_productos') }}">Mis productos</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('lista_deseos') }}">Wishlist</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+              </a>
+            </li>
+          </ul>
+        </li>
+        {% else %}
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('login') }}">Iniciar sesión</a>
+        </li>
+        <li class="nav-item">
+          <a class="btn btn-outline-light ms-2" href="{{ url_for('registro') }}">Registrarse</a>
+        </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>

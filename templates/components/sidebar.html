@@ -1,0 +1,66 @@
+
+
+<div class="sidebar bg-dark text-light p-4 rounded-4 shadow-lg" style="min-width: 250px;">
+  <h5 class="mb-4 text-accent fw-bold">Filtrar productos</h5>
+
+  <form method="GET" action="/productos" class="d-grid gap-3">
+    <div>
+      <label for="categoria" class="form-label">Categoría</label>
+      <select class="form-select bg-dark text-light border-accent" name="categoria" id="categoria">
+        <option value="">Todas</option>
+        {% for tipo in tipos %}
+          <option value="{{ tipo }}">{{ tipo | capitalize }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label for="precio_min" class="form-label">Precio mínimo</label>
+      <input type="number" class="form-control bg-dark text-light border-accent" name="precio_min" id="precio_min" placeholder="0">
+    </div>
+
+    <div>
+      <label for="precio_max" class="form-label">Precio máximo</label>
+      <input type="number" class="form-control bg-dark text-light border-accent" name="precio_max" id="precio_max" placeholder="1000">
+    </div>
+
+    <button type="submit" class="btn btn-accent fw-semibold">Aplicar filtros</button>
+  </form>
+
+  <hr class="text-secondary my-4">
+
+  <h5 class="mb-3">Carrito de compras</h5>
+  {% if carrito %}
+    <div class="table-responsive">
+      <table class="table table-sm table-dark table-bordered align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Precio</th>
+            <th>Cant.</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in carrito.values() %}
+          <tr>
+            <td>{{ item.nombre }}</td>
+            <td>${{ item.precio }}</td>
+            <td>{{ item.cantidad }}</td>
+            <td>
+              <form action="/eliminar_del_carrito/{{ item.producto_id }}" method="POST">
+                <button type="submit" class="btn btn-sm btn-danger"
+                        onclick="return confirm('¿Eliminar este producto del carrito?');">
+                  ✕
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="text-muted">Tu carrito está vacío.</p>
+  {% endif %}
+</div>

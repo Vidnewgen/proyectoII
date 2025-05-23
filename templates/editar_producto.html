@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editar Producto</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f0f4f8;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .edit-container {
+      background: #fff;
+      padding: 2.5rem 2rem;
+      max-width: 480px;
+      margin: 3rem auto;
+      border-radius: 16px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+    }
+    h3 {
+      color: #57a6a4;
+      margin-bottom: 2rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .btn-custom {
+      background-color: #57a6a4;
+      color: #fff;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+    .btn-custom:hover {
+      background-color: #407c7a;
+      color: #fff;
+    }
+    .form-control {
+      border-radius: 8px;
+    }
+    label {
+      font-weight: 500;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="edit-container">
+    <h3>Editar Producto</h3>
+    <form action="/editar_producto/{{ producto._id }}" method="POST" autocomplete="off">
+      <div class="mb-3">
+        <label for="nombre" class="form-label">Título</label>
+        <input type="text" class="form-control" id="nombre" name="nombre" value="{{ producto.nombre }}" required>
+      </div>
+      <div class="mb-3">
+        <label for="descripcion" class="form-label">Descripción</label>
+        <textarea class="form-control" id="descripcion" name="descripcion" rows="3" required>{{ producto.descripcion }}</textarea>
+      </div>
+      <div class="mb-3">
+        <label for="imagen" class="form-label">Imagen (URL o nombre de archivo)</label>
+        <input type="text" class="form-control" id="imagen" name="imagen" value="{{ producto.imagen }}" required>
+      </div>
+      <div class="d-grid">
+        <button type="submit" class="btn btn-custom btn-lg">Guardar Cambios</button>
+      </div>
+    </form>
+  </div>
+</body>
+</html>
+
