@@ -1,0 +1,749 @@
+#si alguien lo implementa funcional le compro una pizza, lol 
+pip install openai transformers torch pillow requests beautifulsoup4 textblob
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vender Producto - Optimizado con IA</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .ia-badge {
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+        }
+        
+        .ia-suggestions {
+            background-color: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0.5rem;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        
+        .suggestion-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            transition: all 0.3s ease;
+        }
+        
+        .suggestion-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+        }
+        
+        .quality-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .quality-excellent { background-color: #28a745; color: white; }
+        .quality-good { background-color: #ffc107; color: black; }
+        .quality-poor { background-color: #dc3545; color: white; }
+        
+        .preview-card {
+            border: 2px dashed #dee2e6;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            margin: 1rem 0;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-gradient text-white" style="background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);">
+                        <h2 class="mb-0">
+                            <i class="fas fa-robot me-2"></i>
+                            Vender Producto
+                            <span class="ia-badge">
+                                <i class="fas fa-magic"></i> Optimizado con IA
+                            </span>
+                        </h2>
+                    </div>
+                    
+                    <div class="card-body">
+                        <!-- Alertas flash -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+                        
+                        <form id="form-vender" method="POST" action="{{ url_for('vender_con_ia') }}">
+                            <!-- Toggle IA -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="usar_ia" name="usar_ia" checked>
+                                        <label class="form-check-label" for="usar_ia">
+                                            <i class="fas fa-magic text-primary"></i>
+                                            <strong>Usar optimización con Inteligencia Artificial</strong>
+                                            <small class="text-muted d-block">La IA ayudará a optimizar título, descripción, categoría y precio</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <!-- Columna izquierda - Datos del producto -->
+                                <div class="col-lg-6">
+                                    <h5 class="mb-3">
+                                        <i class="fas fa-box text-primary me-2"></i>
+                                        Información del Producto
+                                    </h5>
+                                    
+                                    <!-- Título/Nome -->
+                                    <div class="mb-3">
+                                        <label for="titulo" class="form-label">
+                                            <i class="fas fa-tag me-1"></i>
+                                            Nombre del Producto *
+                                        </label>
+                                        <input type="text" class="form-control" id="titulo" name="titulo" required maxlength="100">
+                                        <div class="form-text">Escribe un nombre descriptivo del producto</div>
+                                        <div id="titulo-sugerido" class="ia-suggestions" style="display: none;">
+                                            <small class="text-muted">
+                                                <i class="fas fa-lightbulb text-warning"></i>
+                                                <strong>Sugerencia IA:</strong>
+                                            </small>
+                                            <div id="titulo-sugerido-text" class="mt-1"></div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="aplicarSugerencia('titulo')">
+                                                Usar sugerencia
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Precio -->
+                                    <div class="mb-3">
+                                        <label for="precio" class="form-label">
+                                            <i class="fas fa-dollar-sign me-1"></i>
+                                            Precio (USD)
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" class="form-control" id="precio" name="precio" step="0.01" min="0">
+                                        </div>
+                                        <div class="form-text">Deja vacío para que la IA sugiera un precio</div>
+                                        <div id="precio-sugerido" class="ia-suggestions" style="display: none;">
+                                            <small class="text-muted">
+                                                <i class="fas fa-chart-line text-success"></i>
+                                                <strong>Precio sugerido por IA:</strong>
+                                            </small>
+                                            <div id="precio-sugerido-text" class="mt-1"></div>
+                                            <button type="button" class="btn btn-sm btn-outline-success mt-2" onclick="aplicarSugerencia('precio')">
+                                                Usar precio sugerido
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Categoría -->
+                                    <div class="mb-3">
+                                        <label for="tipo" class="form-label">
+                                            <i class="fas fa-list me-1"></i>
+                                            Categoría
+                                        </label>
+                                        <select class="form-select" id="tipo" name="tipo">
+                                            <option value="">Seleccionar categoría</option>
+                                            <option value="Electrónicos">Electrónicos</option>
+                                            <option value="Ropa">Ropa</option>
+                                            <option value="Hogar">Hogar</option>
+                                            <option value="Deportes">Deportes</option>
+                                            <option value="Libros">Libros</option>
+                                            <option value="Juguetes">Juguetes</option>
+                                            <option value="Belleza">Belleza</option>
+                                            <option value="Automóviles">Automóviles</option>
+                                            <option value="Herramientas">Herramientas</option>
+                                            <option value="Otros">Otros</option>
+                                        </select>
+                                        <div class="form-text">La IA puede detectar automáticamente la categoría</div>
+                                        <div id="categoria-sugerida" class="ia-suggestions" style="display: none;">
+                                            <small class="text-muted">
+                                                <i class="fas fa-tags text-info"></i>
+                                                <strong>Categoría detectada por IA:</strong>
+                                            </small>
+                                            <div id="categoria-sugerida-text" class="mt-1"></div>
+                                            <button type="button" class="btn btn-sm btn-outline-info mt-2" onclick="aplicarSugerencia('categoria')">
+                                                Usar categoría sugerida
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- URL de imagen -->
+                                    <div class="mb-3">
+                                        <label for="imagen" class="form-label">
+                                            <i class="fas fa-image me-1"></i>
+                                            URL de la Imagen
+                                        </label>
+                                        <input type="url" class="form-control" id="imagen" name="imagen" placeholder="https://ejemplo.com/imagen.jpg">
+                                        <div class="form-text">
+                                            Proporciona una URL de imagen para análisis automático con IA
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="analizarImagen()">
+                                            <i class="fas fa-eye me-1"></i>
+                                            Analizar imagen con IA
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Columna derecha - Descripción y vista previa -->
+                                <div class="col-lg-6">
+                                    <h5 class="mb-3">
+                                        <i class="fas fa-file-alt text-primary me-2"></i>
+                                        Descripción y Vista Previa
+                                    </h5>
+                                    
+                                    <!-- Descripción -->
+                                    <div class="mb-3">
+                                        <label for="descripcion" class="form-label">
+                                            <i class="fas fa-align-left me-1"></i>
+                                            Descripción del Producto
+                                        </label>
+                                        <textarea class="form-control" id="descripcion" name="descripcion" rows="6" 
+                                                placeholder="Describe tu producto... (La IA puede generar una descripción optimizada si la dejas vacía)"></textarea>
+                                        <div class="form-text">
+                                            <small>Deja vacío o escribe poco para que la IA genere una descripción completa</small>
+                                        </div>
+                                        <div id="descripcion-sugerida" class="ia-suggestions" style="display: none;">
+                                            <small class="text-muted">
+                                                <i class="fas fa-pen-fancy text-primary"></i>
+                                                <strong>Descripción generada por IA:</strong>
+                                            </small>
+                                            <div id="descripcion-sugerida-text" class="mt-2 p-2 bg-white rounded border"></div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="aplicarSugerencia('descripcion')">
+                                                Usar descripción IA
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Vista previa de imagen -->
+                                    <div class="mb-3">
+                                        <label class="form-label">
+                                            <i class="fas fa-eye me-1"></i>
+                                            Vista Previa
+                                        </label>
+                                        <div id="imagen-preview" class="preview-card">
+                                            <div class="text-muted">
+                                                <i class="fas fa-image fa-3x mb-2"></i>
+                                                <p>Ingresa una URL de imagen para ver la vista previa</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Análisis de imagen IA -->
+                                    <div id="analisis-imagen" class="ia-suggestions" style="display: none;">
+                                        <h6 class="text-primary">
+                                            <i class="fas fa-robot me-1"></i>
+                                            Análisis de Imagen con IA
+                                        </h6>
+                                        <div id="analisis-contenido"></div>
+                                        <div class="mt-2">
+                                            <button type="button" class="btn btn-sm btn-success" onclick="aplicarAnalisisImagen()">
+                                                <i class="fas fa-magic me-1"></i>
+                                                Aplicar datos de la imagen
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Spinner de carga -->
+                            <div id="loading-spinner" class="loading-spinner">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Procesando con IA...</span>
+                                </div>
+                                <p class="mt-2 text-muted">
+                                    <i class="fas fa-magic me-1"></i>
+                                    La IA está optimizando tu producto...
+                                </p>
+                            </div>
+                            
+                            <!-- Botones de sugerencias rápidas -->
+                            <div class="row mb-4" id="sugerencias-rapidas" style="display: none;">
+                                <div class="col-12">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-primary">
+                                                <i class="fas fa-lightbulb me-1"></i>
+                                                Sugerencias Rápidas de IA
+                                            </h6>
+                                            <div class="d-flex flex-wrap gap-2">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="obtenerSugerencias()">
+                                                    <i class="fas fa-sync me-1"></i>
+                                                    Generar sugerencias
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-success" onclick="aplicarTodasSugerencias()">
+                                                    <i class="fas fa-check-double me-1"></i>
+                                                    Aplicar todas
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-info" onclick="validarProducto()">
+                                                    <i class="fas fa-shield-alt me-1"></i>
+                                                    Validar con IA
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Validación IA -->
+                            <div id="validacion-ia" class="mb-4" style="display: none;">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-clipboard-check text-success me-1"></i>
+                                            Validación con IA
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div id="validacion-contenido"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Botones de acción -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <hr>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <small class="text-muted">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Los campos marcados con * son obligatorios
+                                            </small>
+                                        </div>
+                                        <div>
+                                            <a href="{{ url_for('index') }}" class="btn btn-secondary me-2">
+                                                <i class="fas fa-arrow-left me-1"></i>
+                                                Cancelar
+                                            </a>
+                                            <button type="submit" class="btn btn-primary btn-lg">
+                                                <i class="fas fa-plus me-1"></i>
+                                                Publicar Producto
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast para notificaciones -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toast-notificacion" class="toast" role="alert">
+            <div class="toast-header">
+                <i class="fas fa-robot text-primary me-2"></i>
+                <strong class="me-auto">IA Assistant</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toast-mensaje">
+                <!-- Mensaje dinámico -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Variables globales para almacenar sugerencias
+        let sugerenciasIA = {};
+        let analisisImagenData = {};
+        
+        // Mostrar/ocultar funciones IA
+        document.getElementById('usar_ia').addEventListener('change', function() {
+            const sugerenciasDiv = document.getElementById('sugerencias-rapidas');
+            if (this.checked) {
+                sugerenciasDiv.style.display = 'block';
+                mostrarToast('Optimización con IA activada', 'success');
+            } else {
+                sugerenciasDiv.style.display = 'none';
+                ocultarTodasSugerencias();
+                mostrarToast('Optimización con IA desactivada', 'info');
+            }
+        });
+        
+        // Vista previa de imagen
+        document.getElementById('imagen').addEventListener('input', function() {
+            const url = this.value.trim();
+            const preview = document.getElementById('imagen-preview');
+            
+            if (url) {
+                preview.innerHTML = `<img src="${url}" class="image-preview" onerror="imagenError(this)" onload="imagenCargada(this)">`;
+            } else {
+                preview.innerHTML = `
+                    <div class="text-muted">
+                        <i class="fas fa-image fa-3x mb-2"></i>
+                        <p>Ingresa una URL de imagen para ver la vista previa</p>
+                    </div>
+                `;
+            }
+        });
+        
+        function imagenError(img) {
+            img.parentElement.innerHTML = `
+                <div class="text-danger">
+                    <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                    <p>Error al cargar la imagen</p>
+                    <small>Verifica que la URL sea correcta y la imagen sea accesible</small>
+                </div>
+            `;
+        }
+        
+        function imagenCargada(img) {
+            // Imagen cargada correctamente, habilitar análisis IA
+            if (document.getElementById('usar_ia').checked) {
+                setTimeout(() => {
+                    mostrarToast('Imagen cargada. ¡Puedes analizarla con IA!', 'success');
+                }, 500);
+            }
+        }
+        
+        // Análisis de imagen con IA
+        function analizarImagen() {
+            const imagenUrl = document.getElementById('imagen').value.trim();
+            
+            if (!imagenUrl) {
+                mostrarToast('Por favor, ingresa una URL de imagen primero', 'warning');
+                return;
+            }
+            
+            if (!document.getElementById('usar_ia').checked) {
+                mostrarToast('Activa la optimización con IA primero', 'warning');
+                return;
+            }
+            
+            mostrarSpinner();
+            
+            fetch('/api/analizar_imagen', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    imagen_url: imagenUrl
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                ocultarSpinner();
+                
+                if (data.error) {
+                    mostrarToast('Error al analizar imagen: ' + data.error, 'danger');
+                    return;
+                }
+                
+                analisisImagenData = data;
+                mostrarAnalisisImagen(data);
+                mostrarToast('¡Imagen analizada con IA exitosamente!', 'success');
+            })
+            .catch(error => {
+                ocultarSpinner();
+                mostrarToast('Error de conexión al analizar imagen', 'danger');
+                console.error('Error:', error);
+            });
+        }
+        
+        function mostrarAnalisisImagen(data) {
+            const analisisDiv = document.getElementById('analisis-imagen');
+            const contenido = document.getElementById('analisis-contenido');
+            
+            let html = '<div class="row">';
+            
+            if (data.nombre_sugerido) {
+                html += `
+                    <div class="col-md-6 mb-2">
+                        <strong>Nombre sugerido:</strong><br>
+                        <span class="text-primary">${data.nombre_sugerido}</span>
+                    </div>
+                `;
+            }
+            
+            if (data.categoria) {
+                html += `
+                    <div class="col-md-6 mb-2">
+                        <strong>Categoría:</strong><br>
+                        <span class="text-info">${data.categoria}</span>
+                    </div>
+                `;
+            }
+            
+            if (data.descripcion) {
+                html += `
+                    <div class="col-12 mb-2">
+                        <strong>Descripción detectada:</strong><br>
+                        <small class="text-muted">${data.descripcion}</small>
+                    </div>
+                `;
+            }
+            
+            if (data.precio_estimado) {
+                html += `
+                    <div class="col-md-6 mb-2">
+                        <strong>Precio estimado:</strong><br>
+                        <span class="text-success">${data.precio_estimado}</span>
+                    </div>
+                `;
+            }
+            
+            if (data.color_principal) {
+                html += `
+                    <div class="col-md-6 mb-2">
+                        <strong>Color principal:</strong><br>
+                        <span>${data.color_principal}</span>
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+            
+            contenido.innerHTML = html;
+            analisisDiv.style.display = 'block';
+        }
+        
+        function aplicarAnalisisImagen() {
+            if (!analisisImagenData) return;
+            
+            if (analisisImagenData.nombre_sugerido && !document.getElementById('titulo').value) {
+                document.getElementById('titulo').value = analisisImagenData.nombre_sugerido;
+            }
+            
+            if (analisisImagenData.categoria) {
+                document.getElementById('tipo').value = analisisImagenData.categoria;
+            }
+            
+            if (analisisImagenData.descripcion && !document.getElementById('descripcion').value) {
+                document.getElementById('descripcion').value = analisisImagenData.descripcion;
+            }
+            
+            mostrarToast('Datos de la imagen aplicados al formulario', 'success');
+        }
+        
+        // Obtener sugerencias generales
+        function obtenerSugerencias() {
+            const nombre = document.getElementById('titulo').value.trim();
+            const descripcion = document.getElementById('descripcion').value.trim();
+            
+            if (!nombre) {
+                mostrarToast('Ingresa un nombre del producto primero', 'warning');
+                return;
+            }
+            
+            if (!document.getElementById('usar_ia').checked) {
+                mostrarToast('Activa la optimización con IA primero', 'warning');
+                return;
+            }
+            
+            mostrarSpinner();
+            
+            fetch('/api/sugerir_datos', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    nombre: nombre,
+                    descripcion: descripcion
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                ocultarSpinner();
+                
+                if (data.error) {
+                    mostrarToast('Error al obtener sugerencias: ' + data.error, 'danger');
+                    return;
+                }
+                
+                sugerenciasIA = data;
+                mostrarSugerencias(data);
+                mostrarToast('¡Sugerencias generadas con IA!', 'success');
+            })
+            .catch(error => {
+                ocultarSpinner();
+                mostrarToast('Error de conexión al obtener sugerencias', 'danger');
+                console.error('Error:', error);
+            });
+        }
+        
+        function mostrarSugerencias(data) {
+            // Mostrar título optimizado
+            if (data.titulo_optimizado && data.titulo_optimizado !== document.getElementById('titulo').value) {
+                const div = document.getElementById('titulo-sugerido');
+                document.getElementById('titulo-sugerido-text').innerHTML = 
+                    `<strong class="text-primary">${data.titulo_optimizado}</strong>`;
+                div.style.display = 'block';
+            }
+            
+            // Mostrar categoría sugerida
+            if (data.categoria) {
+                const div = document.getElementById('categoria-sugerida');
+                document.getElementById('categoria-sugerida-text').innerHTML = 
+                    `<span class="badge bg-info">${data.categoria}</span>`;
+                div.style.display = 'block';
+            }
+            
+            // Mostrar descripción sugerida
+            if (data.descripcion_sugerida && data.descripcion_sugerida.length > 50) {
+                const div = document.getElementById('descripcion-sugerida');
+                document.getElementById('descripcion-sugerida-text').innerHTML = data.descripcion_sugerida;
+                div.style.display = 'block';
+            }
+            
+            // Mostrar precio sugerido
+            if (data.precio_sugerido && data.precio_sugerido.precio_sugerido > 0) {
+                const div = document.getElementById('precio-sugerido');
+                const precio = data.precio_sugerido;
+                document.getElementById('precio-sugerido-text').innerHTML = `
+                    <div class="d-flex justify-content-between">
+                        <span><strong>${precio.precio_sugerido}</strong></span>
+                        <small class="text-muted">Rango: ${precio.precio_min} - ${precio.precio_max}</small>
+                    </div>
+                `;
+                div.style.display = 'block';
+            }
+        }
+        
+        function aplicarSugerencia(tipo) {
+            switch(tipo) {
+                case 'titulo':
+                    if (sugerenciasIA.titulo_optimizado) {
+                        document.getElementById('titulo').value = sugerenciasIA.titulo_optimizado;
+                        document.getElementById('titulo-sugerido').style.display = 'none';
+                        mostrarToast('Título optimizado aplicado', 'success');
+                    }
+                    break;
+                    
+                case 'categoria':
+                    if (sugerenciasIA.categoria) {
+                        document.getElementById('tipo').value = sugerenciasIA.categoria;
+                        document.getElementById('categoria-sugerida').style.display = 'none';
+                        mostrarToast('Categoría aplicada', 'success');
+                    }
+                    break;
+                    
+                case 'descripcion':
+                    if (sugerenciasIA.descripcion_sugerida) {
+                        document.getElementById('descripcion').value = sugerenciasIA.descripcion_sugerida;
+                        document.getElementById('descripcion-sugerida').style.display = 'none';
+                        mostrarToast('Descripción IA aplicada', 'success');
+                    }
+                    break;
+                    
+                case 'precio':
+                    if (sugerenciasIA.precio_sugerido && sugerenciasIA.precio_sugerido.precio_sugerido > 0) {
+                        document.getElementById('precio').value = sugerenciasIA.precio_sugerido.precio_sugerido;
+                        document.getElementById('precio-sugerido').style.display = 'none';
+                        mostrarToast('Precio sugerido aplicado', 'success');
+                    }
+                    break;
+            }
+        }
+        
+        function aplicarTodasSugerencias() {
+            aplicarSugerencia('titulo');
+            aplicarSugerencia('categoria');
+            aplicarSugerencia('descripcion');
+            aplicarSugerencia('precio');
+            mostrarToast('Todas las sugerencias aplicadas', 'success');
+        }
+        
+        function validarProducto() {
+            // Esta función se ejecutaría en el backend al enviar el formulario
+            mostrarToast('La validación se realizará al publicar el producto', 'info');
+        }
+        
+        // Funciones auxiliares
+        function mostrarSpinner() {
+            document.getElementById('loading-spinner').style.display = 'block';
+        }
+        
+        function ocultarSpinner() {
+            document.getElementById('loading-spinner').style.display = 'none';
+        }
+        
+        function ocultarTodasSugerencias() {
+            document.getElementById('titulo-sugerido').style.display = 'none';
+            document.getElementById('categoria-sugerida').style.display = 'none';
+            document.getElementById('descripcion-sugerida').style.display = 'none';
+            document.getElementById('precio-sugerido').style.display = 'none';
+            document.getElementById('analisis-imagen').style.display = 'none';
+        }
+        
+        function mostrarToast(mensaje, tipo = 'info') {
+            const toast = document.getElementById('toast-notificacion');
+            const toastMensaje = document.getElementById('toast-mensaje');
+            
+            // Cambiar color según tipo
+            toast.className = 'toast';
+            if (tipo === 'success') toast.classList.add('bg-success', 'text-white');
+            else if (tipo === 'danger') toast.classList.add('bg-danger', 'text-white');
+            else if (tipo === 'warning') toast.classList.add('bg-warning');
+            else toast.classList.add('bg-info', 'text-white');
+            
+            toastMensaje.textContent = mensaje;
+            
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+        }
+        
+        // Inicializar cuando carga la página
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mostrar sugerencias rápidas si IA está activada
+            if (document.getElementById('usar_ia').checked) {
+                document.getElementById('sugerencias-rapidas').style.display = 'block';
+            }
+            
+            // Auto-sugerencias en tiempo real (opcional)
+            let timeoutId;
+            document.getElementById('titulo').addEventListener('input', function() {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => {
+                    if (this.value.trim().length > 3 && document.getElementById('usar_ia').checked) {
+                        // Podrías llamar obtenerSugerencias() automáticamente aquí
+                    }
+                }, 1000);
+            });
+        });
+    </script>
+</body>
+</html>
