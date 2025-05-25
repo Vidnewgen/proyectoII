@@ -1,0 +1,6 @@
+pip install -r requirements.txt
+mongod
+
+docker run -d --name redis-timeseries -p 6379:6379 redis/redis-stack-server:latest
+python -m ensurepip --upgrade
+python -m pip install setuptools

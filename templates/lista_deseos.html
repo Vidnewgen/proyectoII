@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lista de Deseos - Tienda Darok</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #10151c 0%, #1e2a38 100%);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #d0e6f6;
+      min-height: 100vh;
+    }
+
+    .highlight-box {
+      background: rgba(23, 34, 49, 0.95);
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 8px 30px rgba(0, 255, 255, 0.08);
+      color: #cde;
+    }
+
+    .btn-futuristic {
+      background: linear-gradient(90deg, #00c6ff, #0072ff);
+      color: #fff;
+      border: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 120, 255, 0.25);
+    }
+
+    .btn-futuristic:hover {
+      background: linear-gradient(90deg, #0072ff, #00c6ff);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(0, 120, 255, 0.35);
+    }
+
+    .card {
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(145deg, #20232a, #2a2f3c);
+      color: #cfdde8;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(0, 120, 255, 0.1);
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 120, 255, 0.15);
+    }
+
+    .card-img-top {
+      height: 200px;
+      object-fit: cover;
+      border-radius: 10px 10px 0 0;
+    }
+
+    .empty-wishlist {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-wishlist i {
+      font-size: 4rem;
+      color: #ff6b9d;
+      margin-bottom: 20px;
+    }
+
+    .wishlist-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .btn-heart {
+      background: linear-gradient(45deg, #ff6b9d, #ff8e8e);
+      border: none;
+      color: white;
+    }
+
+    .btn-heart:hover {
+      background: linear-gradient(45deg, #ff8e8e, #ff6b9d);
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="container py-4">
+    <div class="row">
+      <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h1><i class="fas fa-heart me-2 text-danger"></i>Mi Lista de Deseos</h1>
+          <a href="{{ url_for('index') }}" class="btn btn-outline-light">
+            <i class="fas fa-arrow-left me-2"></i>Volver a la tienda
+          </a>
+        </div>
+      </div>
+    </div>
+
+    {% if deseos_items %}
+      <div class="row g-4">
+        {% for item in deseos_items %}
+          <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+            <div class="card h-100">
+              <img src="{{ item.imagen or '/static/img/no-image.png' }}" 
+                   class="card-img-top" 
+                   alt="{{ item.nombre_producto }}">
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">{{ item.nombre_producto }}</h5>
+                <p class="card-text text-success mb-3">
+                  <strong>${{ "%.2f"|format(item.precio) }}</strong>
+                </p>
+                
+                <div class="wishlist-actions mt-auto">
+                  <form method="POST" action="{{ url_for('agregar_carrito', producto_id=item._id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-success btn-sm" title="Agregar al carrito">
+                      <i class="fas fa-shopping-cart me-1"></i>Carrito
+                    </button>
+                  </form>
+                  
+                  <form method="POST" action="{{ url_for('eliminar_deseo', deseo_id=item._id) }}" 
+                        class="d-inline"
+                        onsubmit="return confirm('¿Quitar de la lista de deseos?')">
+                    <button type="submit" class="btn btn-heart btn-sm" title="Quitar de la lista">
+                      <i class="fas fa-heart-broken me-1"></i>Quitar
+                    </button>
+                  </form>
+                </div>
+                
+                {% if item.fecha_agregado %}
+                  <small class="text-muted mt-2">
+                    Agregado el {{ item.fecha_agregado.strftime('%d/%m/%Y') }}
+                  </small>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="row mt-4">
+        <div class="col-12 text-center">
+          <form method="POST" action="{{ url_for('agregar_todos_carrito') }}">
+            <button type="submit" class="btn btn-futuristic me-3">
+              <i class="fas fa-shopping-cart me-2"></i>Agregar todo al carrito
+            </button>
+          </form>
+          
+          <form method="POST" action="{{ url_for('vaciar_deseos') }}" 
+                class="d-inline mt-3"
+                onsubmit="return confirm('¿Estás seguro de vaciar toda la lista de deseos?')">
+            <button type="submit" class="btn btn-outline-danger">
+              <i class="fas fa-trash me-2"></i>Vaciar lista de deseos
+            </button>
+          </form>
+        </div>
+      </div>
+    {% else %}
+      <div class="highlight-box">
+        <div class="empty-wishlist">
+          <i class="fas fa-heart"></i>
+          <h3>Tu lista de deseos está vacía</h3>
+          <p class="text-muted mb-4">Guarda aquí los productos que más te gusten para comprarlos después.</p>
+          <a href="{{ url_for('index') }}" class="btn btn-futuristic">
+            <i class="fas fa-shopping-bag me-2"></i>Explorar productos
+          </a>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Mensajes flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

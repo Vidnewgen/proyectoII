@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tienda Darok</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #10151c 0%, #1e2a38 100%);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #d0e6f6;
+    }
+
+    .highlight-box {
+      background: rgba(23, 34, 49, 0.95);
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 8px 30px rgba(0, 255, 255, 0.08);
+      color: #cde;
+    }
+
+    .btn-futuristic {
+      background: linear-gradient(90deg, #00c6ff, #0072ff);
+      color: #fff;
+      border: none;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 120, 255, 0.25);
+    }
+
+    .btn-futuristic:hover {
+      background: linear-gradient(90deg, #0072ff, #00c6ff);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(0, 120, 255, 0.35);
+    }
+
+    .icon-big {
+      font-size: 3rem;
+      color: #00c6ff;
+      text-shadow: 0 2px 10px #0072ff99;
+    }
+
+    footer {
+      background: #0d131a;
+      color: #6cb2ff;
+      text-align: center;
+      padding: 24px 0;
+    }
+
+    .sidebar ul li a {
+      color: #80bfff;
+      padding: 8px 0;
+      display: block;
+    }
+
+    .sidebar ul li a:hover {
+      color: #fff;
+      text-decoration: underline;
+    }
+
+    .card-img-top {
+      height: 200px;
+      object-fit: cover;
+      border-radius: 10px 10px 0 0;
+      background: #111;
+    }
+
+    .card {
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(145deg, #20232a, #2a2f3c);
+      color: #cfdde8;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(0, 120, 255, 0.1);
+    }
+
+    .card:hover {
+      transform: translateY(-6px) scale(1.03);
+      box-shadow: 0 8px 32px rgba(0, 120, 255, 0.2);
+    }
+
+    .btn-sm {
+      padding: 5px 10px;
+    }
+
+    .search-box {
+      background: #161e2a;
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0, 120, 255, 0.08);
+    }
+
+    .search-box input,
+    .search-box select {
+      background: #232f46;
+      color: #d0e6f6;
+      border: 1px solid #0072ff;
+    }
+
+    .search-box input:focus,
+    .search-box select:focus {
+      border-color: #00c6ff;
+      box-shadow: 0 0 0 2px #00c6ff33;
+    }
+
+    .page-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+
+    {% include 'components/navbar.html' %}
+
+    <main class="flex-grow-1 py-4">
+      <div class="container-fluid">
+        <div class="row">
+          <!-- Sidebar -->
+          <div class="col-md-3 sidebar d-none d-md-block">
+            <div class="search-box mb-4">
+              <form method="get" action="{{ url_for('index') }}">
+                <div class="mb-2">
+                  <input type="text" class="form-control" name="q" placeholder="Buscar producto por nombre.." value="{{ request.args.get('q', '') }}">
+                </div>
+                <div class="mb-2">
+                  <select class="form-select" name="tipo">
+                    <option value="">Todos los tipos</option>
+                    <option value="electronica" {% if request.args.get('tipo') == 'electronica' %}selected{% endif %}>Electrónica</option>
+                    <option value="ropa" {% if request.args.get('tipo') == 'ropa' %}selected{% endif %}>Ropa</option>
+                    <option value="hogar" {% if request.args.get('tipo') == 'hogar' %}selected{% endif %}>Hogar</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-futuristic w-100">Filtrar</button>
+              </form>
+            </div>
+            <div class="highlight-box">
+              <h4 class="mb-3">Panel</h4>
+              <ul class="list-unstyled">
+                <li><a href="{{ url_for('mis_productos') }}"><i class="fas fa-box me-2"></i>Mis Productos</a></li>
+                <li><a href="{{ url_for('ver_carrito') }}"><i class="fas fa-shopping-cart me-2"></i>Ver Carrito</a></li>
+                <li><a href="{{ url_for('lista_deseos') }}"><i class="fas fa-heart me-2"></i>Lista de Deseos</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Contenido principal -->
+          <div class="col-md-9">
+            <div class="container text-center">
+              <div class="highlight-box mb-4">
+                <h1 class="mb-3">Bienvenido</h1>
+                <p class="lead mb-4">Explora nuestra colección de productos seleccionados especialmente para ti.</p>
+                <a href="{{ url_for('mis_productos') }}" class="btn btn-futuristic btn-lg">Ver productos</a>
+              </div>
+            </div>
+
+            <!-- Beneficios -->
+            <div class="row g-4 justify-content-center mb-5">
+              <div class="col-md-4">
+                <div class="highlight-box text-center">
+                  <i class="fas fa-shipping-fast icon-big mb-3"></i>
+                  <h4>Envío Rápido</h4>
+                  <p>Entregamos en tiempo récord, sin complicaciones.</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="highlight-box text-center">
+                  <i class="fas fa-lock icon-big mb-3"></i>
+                  <h4>Pago Seguro</h4>
+                  <p>Tu información protegida con tecnología de punta.</p>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="highlight-box text-center">
+                  <i class="fas fa-headset icon-big mb-3"></i>
+                  <h4>Soporte 24/7</h4>
+                  <p>Estamos siempre disponibles para ayudarte.</p>
+                  <p class="text-muted mt-3">Visitas a esta página: {{ visitas or 0 }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Productos -->
+            <div class="container">
+              <h3 class="mb-4">Productos</h3>
+              <div class="row g-4">
+                {% if productosventa %}
+                  {% for producto in productosventa %}
+                    <div class="col-12 col-sm-6 col-md-4">
+                      <div class="card h-100">
+                        <a href="{{ url_for('ver_producto', producto_id=producto._id) }}">
+                          <img src="{{ producto.imagen }}" class="card-img-top" alt="{{ producto.nombre }}">
+                        </a>
+                        <div class="card-body d-flex flex-column">
+                          <h5 class="card-title">
+                            <a href="{{ url_for('ver_producto', producto_id=producto._id) }}" class="text-decoration-none text-light">
+                              {{ producto.titulo }}
+                            </a>
+                          </h5>
+                          <p class="card-text">{{ producto.descripcion }}</p>
+                          <div class="d-flex justify-content-between mt-auto">
+                            <form action="{{ url_for('agregar_carrito', producto_id=producto._id) }}" method="POST">
+                              <button type="submit" class="btn btn-success btn-sm" title="Agregar al carrito">+</button>
+                            </form>
+                            <form action="{{ url_for('agregar_deseo', producto_id=producto._id) }}" method="POST">
+                              <button type="submit" class="btn btn-light btn-sm" title="Agregar a la lista de deseos">
+                                <i class="fas fa-heart text-danger"></i>
+                              </button>
+                            </form>
+                            {% if es_admin() %}
+                              <a href="{{ url_for('stats_producto', producto_id=producto._id) }}" class="btn btn-info btn-sm" title="Ver estadísticas">
+                                <i class="fas fa-chart-line"></i>
+                              </a>
+                            {% endif %}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  {% endfor %}
+                {% else %}
+                  <p class="text-center text-muted">Lista vacía. No hay productos disponibles.</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 Tienda Darok. Todos los derechos reservados.</p>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
