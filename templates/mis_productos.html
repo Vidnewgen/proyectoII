@@ -88,15 +88,19 @@
             <div class="card h-100">
               <img src="{{ producto.imagen or 'https://via.placeholder.com/300x200?text=Sin+Imagen' }}" class="card-img-top" alt="Imagen del producto">
               <div class="card-body">
-                <h5 class="card-title">{{ producto.nombre or 'Producto sin nombre' }}</h5>
+                <h5 class="card-title">{{ producto.tipo or 'Producto sin nombre' }}</h5>
                 <p class="card-text">{{ producto.descripcion or 'Sin descripción disponible.' }}</p>
                 <p><strong>Precio:</strong> ${{ producto.precio }}</p>
                 <p><strong>Tipo:</strong> {{ producto.tipo }}</p>
-                <p><strong>Publicado por:</strong> {{ producto.usuario_id }}</p>
+                <p><strong>descripcion:</strong> {{ producto.descripcion }}</p>
               </div>
               <div class="card-footer">
                 <a href="/editar_producto/{{ producto._id }}" class="btn btn-warning">Editar</a>
-                <a href="/eliminar_producto/{{ producto._id }}" class="btn btn-danger">Eliminar</a>
+                <a href="/eliminar_producto/{{ producto._id }}" 
+                  class="btn btn-danger" 
+                  onclick="return confirm('¿Estás seguro de eliminar este producto?')">
+                  Eliminar
+                </a>
               </div>
             </div>
           </div>

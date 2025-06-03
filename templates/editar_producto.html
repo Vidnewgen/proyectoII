@@ -48,12 +48,20 @@
     <h3>Editar Producto</h3>
     <form action="/editar_producto/{{ producto._id }}" method="POST" autocomplete="off">
       <div class="mb-3">
+        <label for="nombre" class="form-label">Tipo</label>
+        <input type="text" class="form-control" id="tipo" name="tipo" value="{{ producto.tipo }}" required>
+      </div>
+      <div class="mb-3">
         <label for="nombre" class="form-label">Título</label>
-        <input type="text" class="form-control" id="nombre" name="nombre" value="{{ producto.nombre }}" required>
+        <input type="text" class="form-control" id="titulo" name="titulo" value="{{ producto.titulo }}" required>
       </div>
       <div class="mb-3">
         <label for="descripcion" class="form-label">Descripción</label>
         <textarea class="form-control" id="descripcion" name="descripcion" rows="3" required>{{ producto.descripcion }}</textarea>
+      </div>
+      <div class="mb-3">
+        <label for="nombre" class="form-label">Precio</label>
+        <input type="number" class="form-control" id="precio" name="precio" value="{{ producto.precio }}" required>
       </div>
       <div class="mb-3">
         <label for="imagen" class="form-label">Imagen (URL o nombre de archivo)</label>

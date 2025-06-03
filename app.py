@@ -484,13 +484,23 @@ def inject_global_functions():
         'producto_en_lista_deseos': producto_en_lista_deseos
     }
 
+def obtener_productom(producto_id):
+    datos = mongo.db.productos.find_one({"_id":ObjectId(producto_id)})
+    return datos
+
+def actualizar_productom(producto_id,datos_actuales):
+    actual = mongo.db.productos.update_one({"_id":ObjectId(producto_id)},
+                                {"$set":datos_actuales}
+                                )
+    return actual
+
 @app.route('/editar_producto/<producto_id>', methods=['GET', 'POST'])
 def editar_producto(producto_id):
     if not usuario_logueado():
         flash("Debe iniciar sesión para editar productos.", "warning")
         return redirect(url_for('login'))
-
-    producto = obtener_producto(producto_id)
+    producto = obtener_productom(producto_id)
+    print(producto)
     if not producto:
         flash("Producto no encontrado.", "danger")
         return redirect(url_for('index'))
@@ -501,29 +511,40 @@ def editar_producto(producto_id):
         return redirect(url_for('index'))
 
     if request.method == 'POST':
-        nombre = request.form.get('nombre', '').strip()
+        tipo = request.form.get('tipo','').strip()
+        titulo = request.form.get('titulo', '').strip()
+        precio = request.form.get('precio', '').strip()
         descripcion = request.form.get('descripcion', '').strip()
         imagen = request.form.get('imagen', '').strip()
 
-        if not nombre or not descripcion or not imagen:
+        if not titulo or not descripcion or not imagen or not tipo or not precio:
             flash("Todos los campos son obligatorios.", "warning")
             return render_template('editar_producto.html', producto=producto)
 
         datos_actualizados = {
-            'nombre': nombre,
+            'tipo': tipo,
+            'precio': precio,
+            'titulo': titulo,
             'descripcion': descripcion,
             'imagen': imagen
         }
 
-        exito = actualizar_producto(producto_id, datos_actualizados)
+        exito = actualizar_productom(producto_id, datos_actualizados)
         if exito:
             flash("Producto actualizado correctamente.", "success")
-            return redirect(url_for('perfil'))  # O la página que quieras
+            return redirect(url_for('mis_productos'))  # O la página que quieras
         else:
             flash("Error al actualizar el producto.", "danger")
 
     return render_template('editar_producto.html', producto=producto)
 
+#ELIMINAR PRODUCTO
+@app.route('/eliminar_producto/<id>', methods=['GET'])
+def eliminar_producto(id):
+    # Eliminar el producto de la base de datos usando el ID
+    mongo.db.productos.delete_one({"_id": ObjectId(id)})
+    # Redirigir a la página de administración después de eliminar
+    return redirect(url_for('mis productos'))  # Cambia esto según tu ruta de panel de administración
 
 @app.route('/actualizar_cantidad_carrito/<item_id>', methods=['POST'])
 def actualizar_cantidad_carrito(item_id):
