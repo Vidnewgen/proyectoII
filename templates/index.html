@@ -225,6 +225,25 @@
                   <p class="text-center text-muted">Lista vacía. No hay productos disponibles.</p>
                 {% endif %}
               </div>
+              <nav aria-label="Paginación productos" class="mt-4">
+                <ul class="pagination justify-content-center">
+                  {% if pagina > 1 %}
+                    <li class="page-item">
+                      <a class="page-link" href="{{ url_for('index', page=pagina-1, tipo=request.args.get('tipo'), q=request.args.get('q')) }}">Anterior</a>
+                    </li>
+                  {% endif %}
+                  {% for p in range(1, total_paginas + 1) %}
+                    <li class="page-item {% if p == pagina %}active{% endif %}">
+                      <a class="page-link" href="{{ url_for('index', page=p, tipo=request.args.get('tipo'), q=request.args.get('q')) }}">{{ p }}</a>
+                    </li>
+                  {% endfor %}
+                  {% if pagina < total_paginas %}
+                    <li class="page-item">
+                      <a class="page-link" href="{{ url_for('index', page=pagina+1, tipo=request.args.get('tipo'), q=request.args.get('q')) }}">Siguiente</a>
+                    </li>
+                  {% endif %}
+                </ul>
+              </nav>
             </div>
           </div>
         </div>

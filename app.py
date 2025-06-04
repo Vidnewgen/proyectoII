@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, flash, session, url
 from flask_session import Session
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
+from flask import request
 import bcrypt
 import json
 import redis
@@ -9,6 +10,7 @@ from redis.exceptions import ResponseError
 import time
 from redis_utils import obtener_producto, actualizar_producto
 from datetime import datetime
+import time
 
 # --- Configuración de la App ---
 app = Flask(__name__)
@@ -22,7 +24,8 @@ Session(app)
 
 # Conexión a Redis y MongoDB
 redis_conn = redis.Redis(host='localhost', port=6379, decode_responses=True)
-app.config["MONGO_URI"] = "mongodb://localhost:27017/tienda_db"
+#app.config["MONGO_URI"] = "mongodb://localhost:27017/tienda_db"
+app.config["MONGO_URI"] = "mongodb+srv://vidalnuevo:699524678vidal@bdd3.twwwo.mongodb.net/tienda_db?retryWrites=true&w=majority&appName=bdd3"
 mongo = PyMongo(app)
 
 # --- Funciones auxiliares ---
@@ -72,6 +75,7 @@ def create_ts_key_if_not_exists(key):
 # --- Middleware robusto para requerir login ---
 @app.before_request
 def require_login():
+    mongo.db.usuarios.create_index("username", unique=True)
     rutas_publicas = {'login', 'login_invitado', 'registro', 'static', 'home', 'opening', 'logout'}
     endpoint = request.endpoint
     if endpoint is None:
@@ -86,10 +90,12 @@ def require_login():
 # Página de apertura (landing)
 @app.route('/')
 def home():
+    start = time.time()
     if usuario_logueado():
         return redirect(url_for('index'))
     usuario = obtener_usuario_actual()
     productos = list(mongo.db.productos.find())
+    
     return render_template('opening.html', productos=productos, usuario=usuario)
 
 @app.route('/opening')
@@ -103,17 +109,23 @@ def opening():
 def login():
     if usuario_logueado():
         return redirect(url_for('index'))
+
     if request.method == 'POST':
-        user = mongo.db.usuarios.find_one({'username': request.form['username']})
-        if user and bcrypt.checkpw(request.form['password'].encode(), user['password']):
+
+        username = request.form['username']
+
+        user = mongo.db.usuarios.find_one({'username': username})
+
+        # --- Verificación de contraseña ---
+        password_ok = user and bcrypt.checkpw(request.form['password'].encode(), user['password'])
+        if password_ok:
             session['usuario'] = user['username']
             session['usuario_id'] = str(user['_id'])
-            redis_conn.set(f"sesion:{user['username']}", 'activa', ex=3600)
-            redis_conn.hset(f"usuario:{user['username']}", 'username', user['username'])
-            redis_conn.hset(f"usuario:{user['username']}", 'email', user.get('correo', ''))
             flash("Bienvenido, Administrador" if user.get('admin') else "Bienvenido", "success")
             return redirect(url_for('admin_panel' if user.get('admin') else 'index'))
+
         flash("Credenciales inválidas", "danger")
+
     usuario = obtener_usuario_actual()
     return render_template('login.html', usuario=usuario)
 
@@ -162,24 +174,33 @@ def registro():
 # --- Página principal de productos con búsqueda y filtro ---
 @app.route('/index')
 def index():
+    start = time.time()
     user_type = "registered" if usuario_logueado() else "anonymous"
     visitas = redis_conn.incr('visitas_index')
     record_visit("index", user_type)
 
     tipo_filtro = request.args.get('tipo')
     q = request.args.get('q', '').strip()
-    query = {}
+    pagina = int(request.args.get('page', 1))  # Página actual, default 1
+    limite = 12
+    skip = (pagina - 1) * limite
     
+    query = {}
     if tipo_filtro:
         query['tipo'] = tipo_filtro
     if q:
         query['nombre'] = {'$regex': q, '$options': 'i'}
 
-    productosventa = list(mongo.db.productos.find(query))
+    total_productos = mongo.db.productos.count_documents(query)
+    total_paginas = (total_productos + limite - 1) // limite
+
+    productosventa = list(mongo.db.productos.find(query).skip(skip).limit(limite))
     usuario = obtener_usuario_actual()
 
     if user_type == "anonymous":
-        return render_template('index_invitado.html', productosventa=productosventa, visitas=str(visitas))
+        print(f"Consulta index: {time.time() - start:.3f}s")
+        return render_template('index_invitado.html', productosventa=productosventa, visitas=str(visitas),
+                               pagina=pagina, total_paginas=total_paginas)
 
     carrito, total = {}, 0
     if usuario_logueado():
@@ -188,12 +209,10 @@ def index():
         carrito = {k: json.loads(v) for k, v in carrito_raw.items()}
         total = sum(item['cantidad'] * item['precio'] for item in carrito.values())
 
-    return render_template('index.html',
-                           productosventa=productosventa,
-                           usuario=usuario,
-                           carrito=carrito,
-                           total=total,
-                           visitas=str(visitas))
+    print(f"Consulta index: {time.time() - start:.3f}s")
+    return render_template('index.html', productosventa=productosventa, usuario=usuario, carrito=carrito, total=total, visitas=str(visitas),
+                           pagina=pagina, total_paginas=total_paginas)
+
 
 # --- Perfil ---
 @app.route('/perfil')
@@ -304,7 +323,7 @@ def stats_producto(producto_id):
 
 # --- Carrito de compras ---
 
-# Definir las colecciones de MongoDB
+# Definir las colecciones de MongoDB    
 carritos_collection = mongo.db.carritos  # Asegúrate de que esto esté definido
 deseos_collection = mongo.db.deseos      # Asegúrate de que esto esté definido
 
@@ -319,7 +338,7 @@ def ver_carrito():
     key = f"carrito:{user_id}"
     carrito_raw = redis_conn.hgetall(key)
     carrito = {k: json.loads(v) for k, v in carrito_raw.items()}
-    total = sum(item['cantidad'] * item['precio'] for item in carrito.values())
+    total = sum(float(item['cantidad']) * float(item['precio']) for item in carrito.values())
     
     usuario = obtener_usuario_actual()
     return render_template('carrito.html', carrito_items=carrito, total=total, usuario=usuario)
@@ -513,7 +532,7 @@ def editar_producto(producto_id):
     if request.method == 'POST':
         tipo = request.form.get('tipo','').strip()
         titulo = request.form.get('titulo', '').strip()
-        precio = request.form.get('precio', '').strip()
+        precio = float(request.form.get('precio', '').strip())
         descripcion = request.form.get('descripcion', '').strip()
         imagen = request.form.get('imagen', '').strip()
 
