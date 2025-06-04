@@ -100,7 +100,11 @@
                                             <td>
                                                 <a href="/producto/{{ producto._id }}" class="btn btn-info">Ver</a>
                                                 <a href="/editar_producto/{{ producto._id }}" class="btn btn-warning">Editar</a>
-                                                <a href="/eliminar_producto/{{ producto._id }}" class="btn btn-danger">Eliminar</a>
+                                                <a href="/eliminar_producto/{{ producto._id }}?origen=admin" 
+                                                    class="btn btn-danger" 
+                                                    onclick="return confirm('¿Estás seguro de eliminar este producto?')">
+                                                    Eliminar
+                                                </a>
                                             </td>
                                         </tr>
                                         {% endfor %}

@@ -174,7 +174,7 @@ def registro():
 # --- Página principal de productos con búsqueda y filtro ---
 @app.route('/index')
 def index():
-    start = time.time()
+
     user_type = "registered" if usuario_logueado() else "anonymous"
     visitas = redis_conn.incr('visitas_index')
     record_visit("index", user_type)
@@ -187,9 +187,9 @@ def index():
     
     query = {}
     if tipo_filtro:
-        query['tipo'] = tipo_filtro
+        query['tipo'] = {'$regex': tipo_filtro, '$options': 'i'}
     if q:
-        query['nombre'] = {'$regex': q, '$options': 'i'}
+        query['titulo'] = {'$regex': q, '$options': 'i'}
 
     total_productos = mongo.db.productos.count_documents(query)
     total_paginas = (total_productos + limite - 1) // limite
@@ -198,7 +198,6 @@ def index():
     usuario = obtener_usuario_actual()
 
     if user_type == "anonymous":
-        print(f"Consulta index: {time.time() - start:.3f}s")
         return render_template('index_invitado.html', productosventa=productosventa, visitas=str(visitas),
                                pagina=pagina, total_paginas=total_paginas)
 
@@ -209,7 +208,6 @@ def index():
         carrito = {k: json.loads(v) for k, v in carrito_raw.items()}
         total = sum(item['cantidad'] * item['precio'] for item in carrito.values())
 
-    print(f"Consulta index: {time.time() - start:.3f}s")
     return render_template('index.html', productosventa=productosventa, usuario=usuario, carrito=carrito, total=total, visitas=str(visitas),
                            pagina=pagina, total_paginas=total_paginas)
 
@@ -519,7 +517,6 @@ def editar_producto(producto_id):
         flash("Debe iniciar sesión para editar productos.", "warning")
         return redirect(url_for('login'))
     producto = obtener_productom(producto_id)
-    print(producto)
     if not producto:
         flash("Producto no encontrado.", "danger")
         return redirect(url_for('index'))
@@ -560,10 +557,15 @@ def editar_producto(producto_id):
 #ELIMINAR PRODUCTO
 @app.route('/eliminar_producto/<id>', methods=['GET'])
 def eliminar_producto(id):
-    # Eliminar el producto de la base de datos usando el ID
     mongo.db.productos.delete_one({"_id": ObjectId(id)})
-    # Redirigir a la página de administración después de eliminar
-    return redirect(url_for('mis productos'))  # Cambia esto según tu ruta de panel de administración
+    # Obtener el parámetro "origen"
+    origen = request.args.get('origen', 'usuario')  # por defecto es 'usuario'
+
+    if origen == 'admin':
+        return redirect(url_for('panel_admin'))
+    else:
+        return redirect(url_for('mis_productos'))
+
 
 @app.route('/actualizar_cantidad_carrito/<item_id>', methods=['POST'])
 def actualizar_cantidad_carrito(item_id):

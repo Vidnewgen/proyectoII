@@ -128,12 +128,7 @@
                   <input type="text" class="form-control" name="q" placeholder="Buscar producto por nombre.." value="{{ request.args.get('q', '') }}">
                 </div>
                 <div class="mb-2">
-                  <select class="form-select" name="tipo">
-                    <option value="">Todos los tipos</option>
-                    <option value="electronica" {% if request.args.get('tipo') == 'electronica' %}selected{% endif %}>Electrónica</option>
-                    <option value="ropa" {% if request.args.get('tipo') == 'ropa' %}selected{% endif %}>Ropa</option>
-                    <option value="hogar" {% if request.args.get('tipo') == 'hogar' %}selected{% endif %}>Hogar</option>
-                  </select>
+                  <input type="text" class="form-control" name="tipo" placeholder="Buscar producto por tipo.." value="{{ request.args.get('tipo', '') }}">
                 </div>
                 <button type="submit" class="btn btn-futuristic w-100">Filtrar</button>
               </form>
